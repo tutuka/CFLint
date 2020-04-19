@@ -7,7 +7,7 @@
                 {
                     "code": "INVALID_COMPONENT_USAGE",
                     "severity": "ERROR",
-                    "messageText": "Component ${component} usage is not  valid . Please use ${case} only"
+                    "messageText": "Component '${variable} usage is not  valid . Please use ${case} only"
                 },
                 {
                     "code": "COMPONENT_NOT_FOUND",
