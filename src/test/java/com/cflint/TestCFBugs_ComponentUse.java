@@ -138,18 +138,78 @@ public class TestCFBugs_ComponentUse {
     }
 
     @Test
-    public void testComponentWithMultipleErrors() throws CFLintScanException {
-        final String tagSrc = "component implements = 'base' restpath = 'authenticate' rest = true {\n" +
-            "property name = 'reporter' inject = 'components.error.errorfunctions';\n" +
-            " public function init() {\n" +
-            "      server.di = createObject('component', 'components.xmlRpc').init();\n" +
-            "      config = new components.configuration.manager('VoucherEngine', Attributes);\n" +
-            "      return this;\n" +
-            "  }\n" +
-            "}";
+    public void testExtendsCFMLComponentError() throws CFLintScanException {
+        final String tagSrc = "<cfcomponent extends=\"components.cfcs.xmlRpcService\">\n" +
+            "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
-        assertEquals(lintresult.getIssues().values().toString(), 4, result.size());
+        assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
     }
+
+    @Test
+    public void testExtendsCFMLComponentNoError() throws CFLintScanException {
+        final String tagSrc = "<cfcomponent extends=\"components.cfcs.XmlRpcService\">\n" +
+            "</cfcomponent>";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
+    }
+
+    @Test
+    public void testCFMLCreateObjectError() throws CFLintScanException {
+        final String tagSrc = "<cfcomponent >\n" +
+            "<cfset errorHandler = createObject(\"component\",\"components.error.errorFunctions\")>\n" +
+            "</cfcomponent>";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
+    }
+
+    @Test
+    public void testCFMLCreateObjectNoError() throws CFLintScanException {
+        final String tagSrc = "<cfcomponent >\n" +
+            "<cfset errorHandler = createObject(\"component\",\"components.error.ErrorFunctions\")>\n" +
+            "</cfcomponent>";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
+    }
+
+    @Test
+    public void testCFMLNewComponentError() throws CFLintScanException {
+        final String tagSrc = "<cfcomponent >\n" +
+            "<cfset maskedVoucherNumberService = new components.cfcs.maskVoucherNumber()>\n" +
+            "</cfcomponent>";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
+    }
+
+    @Test
+    public void testCFMLNewComponentNoError() throws CFLintScanException {
+        final String tagSrc = "<cfcomponent >\n" +
+            "<cfset maskedVoucherNumberService = new components.cfcs.MaskVoucherNumber()>\n" +
+            "</cfcomponent>";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
+    }
+
+    @Test
+    public void testDiGetInstanceError() throws CFLintScanException {
+        final String tagSrc = "exporter = server.di.getInstance('components.eftBatchProcessor.service.secExporter');";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
+    }
+
+    @Test
+    public void testDiGetInstanceNoError() throws CFLintScanException {
+        final String tagSrc = "exporter = server.di.getInstance('components.eftBatchProcessor.service.SecExporter');";
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        Collection<List<BugInfo>> result = lintresult.getIssues().values();
+        assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
+    }
+
 
 }

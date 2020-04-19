@@ -3,9 +3,11 @@ package com.cflint.plugins.core;
 import cfml.parsing.cfscript.CFExpression;
 import cfml.parsing.cfscript.script.*;
 import com.cflint.BugList;
+import com.cflint.CF;
 import com.cflint.plugins.CFLintScannerAdapter;
 import com.cflint.plugins.Context;
 
+import net.htmlparser.jericho.Element;
 import ro.fortsoft.pf4j.Extension;
 
 import java.util.Map;
@@ -22,8 +24,8 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
         NEW_COMPONENT,
         CREATEOBJECT,
         ATTRIBUTE,
-        COMPONENT_IMPLEMENTS,
         CFML_TEMPLATE,
+        DI_GET_INSTANCE,
         UNDEFINED
     }
 
@@ -37,6 +39,7 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
         patternsMap.put(UsageTypes.CREATEOBJECT, Pattern.compile("createObject.*component.*[\\'\\\"]([\\w\\d.]*)[\\'\\\"]"));
         patternsMap.put(UsageTypes.ATTRIBUTE, Pattern.compile("[\\'\\\"]([\\w\\.]+)[\\'\\\"]"));
         patternsMap.put(UsageTypes.NEW_COMPONENT, Pattern.compile("new\\s+([\\w\\d.]*)\\(.*"));
+        patternsMap.put(UsageTypes.DI_GET_INSTANCE, Pattern.compile("server\\.di\\.getInstance\\([\\'\\\"]([\\w\\d.]*)[\\'\\\"]"));
         PascalCasePattern = Pattern.compile("^[A-Z][a-z]+(?:[A-Z][a-z]+)*$");
     }
 
@@ -76,6 +79,22 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
 
     }
 
+    @Override
+    public void element(final Element element, final Context context, final BugList bugs) {
+        if (element.getName().equals(CF.CFCOMPONENT)) {
+            final String attributeVal = element.getAttributeValue("extends");
+            if (attributeVal != null && !attributeVal.trim().isEmpty()) {
+                final int lineNo = element.getSource().getRow(element.getBegin());
+                verifyComponentUsage(context, lineNo, element.getBegin(), attributeVal);
+            }
+        } else if (element.getName().equals(CF.CFSET)) {
+            final String content = element.getStartTag().getTagContent().toString();
+            final int lineNo = element.getSource().getRow(element.getBegin());
+            checkComponentUse(context, content, lineNo, element.getBegin());
+        }
+    }
+
+
     private void checkComponentUse(Context context, String code, int lineNo, int offset) {
         UsageTypes componentUsage = getComponentUseIfAny(code);
         if (patternsMap.containsKey(componentUsage)) {
@@ -97,7 +116,7 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
             componentName = paths[paths.length - 1];
         }
         if (!PascalCasePattern.matcher(componentName).matches()) {
-            context.addMessage("INVALID_COMPONENT_USAGE", null, lineNo, offset);
+            context.addMessage("INVALID_COMPONENT_USAGE", componentName, lineNo, offset);
         }
     }
 
@@ -107,6 +126,8 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
             return UsageTypes.CREATEOBJECT;
         } else if (codeLine.contains("new")) {
             return UsageTypes.NEW_COMPONENT;
+        } else if (codeLine.contains("server.di.getinstance")) {
+            return UsageTypes.DI_GET_INSTANCE;
         } else if (codeLine.contains("extends")) {
             return UsageTypes.ATTRIBUTE;
         } else if (codeLine.contains("implements")) {
