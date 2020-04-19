@@ -1,6 +1,28 @@
 {
     "ruleImpl": [
         {
+            "name": "ComponentUseChecker",
+            "className": "ComponentUseChecker",
+            "message": [
+                {
+                    "code": "INVALID_COMPONENT_USAGE",
+                    "severity": "ERROR",
+                    "messageText": "Component name ${component} is not  valid . Please use ${case}"
+                },
+                {
+                    "code": "COMPONENT_NOT_FOUND",
+                    "severity": "INFO",
+                    "messageText": "Component  ${component} not found."
+                }
+            ],
+            "parameter": [
+                {
+                    "name": "case",
+                    "value": "PascalCase"
+                }
+            ]
+        },
+        {
             "name": "ArgDefChecker",
             "message": [
                 {
