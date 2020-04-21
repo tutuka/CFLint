@@ -31,14 +31,15 @@ public class ComponentPath {
         //without this, to find the web root , we have to search for server/web.xml coldfusion configuration file
         String[] knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos", "access", "customTags", "common"};
         HashSet<String> knownRootSubs = new HashSet<>(Arrays.asList(knownRootSubDirs));
-        File current = new File(folderPath);
+        File current = Paths.get(folderPath).toAbsolutePath().normalize().toFile();
         boolean foundRoot = false;
-
+        System.out.println("searching web root from  " + current.toString());
         do {
             String currentDir = current.getParentFile().getName();
-            if (knownRootSubs.contains(currentDir)) {
+            if (knownRootSubs.contains(currentDir.toLowerCase())) {
                 rootPath = current.getParentFile().getParentFile().toPath();
                 foundRoot = true;
+                System.out.println("found web root" + rootPath.toString());
             }
             current = current.getParentFile();
         } while (!foundRoot && current.toPath().getNameCount() != 0);
@@ -53,9 +54,7 @@ public class ComponentPath {
 
     public boolean ComponentExists(String componentName, String currentSrcFile) {
 
-        if (CFknownScriptFunctions.contains(componentName.toLowerCase())) {
-            return true;
-        }
+        if (isKnownCFScriptFunc(componentName)) return true;
         if (rootPath == null) {
             System.out.println("root path not found");
         } else {
@@ -68,13 +67,20 @@ public class ComponentPath {
         return false;
     }
 
+    public boolean isKnownCFScriptFunc(String componentName) {
+        if (CFknownScriptFunctions.contains(componentName.toLowerCase())) {
+            return true;
+        }
+        return false;
+    }
+
     private Path getComponentPath(String componentName, String currentSrcFile) {
         String folderpath = "";
         if (componentName.contains(".")) {
             folderpath = rootPath.toAbsolutePath() + separator + String.join(separator, componentName.split("\\.")) + ".cfc";
         } else {
             Path parentDir = Paths.get(currentSrcFile).getParent();
-            folderpath = parentDir.toAbsolutePath().toString() + separator + componentName + ".cfc";
+            folderpath = parentDir.toAbsolutePath().normalize().toString() + separator + componentName + ".cfc";
         }
         return Paths.get(folderpath);
 

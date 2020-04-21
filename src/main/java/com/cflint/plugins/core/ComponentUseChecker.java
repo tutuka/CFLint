@@ -21,7 +21,7 @@ import com.cflint.tools.CFTool;
 @Extension
 public class ComponentUseChecker extends CFLintScannerAdapter {
 
-    public static enum UsageTypes {
+    public enum UsageTypes {
         NEW_COMPONENT,
         CREATEOBJECT,
         ATTRIBUTE,
@@ -37,10 +37,10 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
     static {
         patternsMap = new HashMap<>();
         patternsMap.put(UsageTypes.CFML_TEMPLATE, Pattern.compile("template=\"(.*)\""));
-        patternsMap.put(UsageTypes.CREATEOBJECT, Pattern.compile("createObject.*component.*[\\'\\\"]([\\w\\d.]*)[\\'\\\"]"));
+        patternsMap.put(UsageTypes.CREATEOBJECT, Pattern.compile("createObject.*component[\\'\\\"\\,\\s]+[\\'\\\"]([\\w\\d.]*)[\\'\\\"]\\s*\\)"));
         patternsMap.put(UsageTypes.ATTRIBUTE, Pattern.compile("[\\'\\\"]([\\w\\.]+)[\\'\\\"]"));
         patternsMap.put(UsageTypes.NEW_COMPONENT, Pattern.compile("new\\s+([\\w\\d.]*)\\(.*"));
-        patternsMap.put(UsageTypes.DI_GET_INSTANCE, Pattern.compile("server\\.di\\.getInstance\\([\\'\\\"]([\\w\\d.]*)[\\'\\\"]\\s*\\)"));
+        patternsMap.put(UsageTypes.DI_GET_INSTANCE, Pattern.compile("server\\.di\\.getInstance\\([\\s\\'\\\"]([\\w\\d.]*)[\\'\\\"]\\s*\\)"));
         PascalCasePattern = Pattern.compile("^[A-Z][a-z]+(?:[A-Z][a-z]+)*$");
     }
 
@@ -104,7 +104,7 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
     }
 
     private void checkComponentUse(Context context, String code, int lineNo, int offset, UsageTypes componentUsage) {
-        Matcher matcher = patternsMap.get(componentUsage).matcher(code);
+        Matcher matcher = patternsMap.get(componentUsage).matcher(code.replace("\n", "").replace("\r", ""));
         if (matcher.find()) {
             String componentName = matcher.group(1);
             verifyComponentUsage(context, lineNo, offset, componentName);
@@ -112,9 +112,9 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
     }
 
     private void verifyComponentUsage(Context context, int lineNo, int offset, String componentName) {
-        System.out.println(componentName);
         String fileName = context.getFilename();
-        System.out.println(fileName);
+        System.out.println("checking " + fileName);
+        System.out.println("looking for component: " + componentName);
         ComponentPath compPath = ComponentPath.getInstance(fileName);
         if (!compPath.ComponentExists(componentName, fileName)) {
             context.addMessage("COMPONENT_NOT_FOUND", componentName, lineNo, offset);
