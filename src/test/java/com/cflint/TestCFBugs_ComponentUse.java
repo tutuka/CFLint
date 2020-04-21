@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.util.Collection;
 import java.util.List;
 
+import com.cflint.plugins.core.ComponentPath;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,11 +22,12 @@ public class TestCFBugs_ComponentUse {
     public void setUp() throws Exception {
         final ConfigBuilder configBuilder = new ConfigBuilder().include("INVALID_COMPONENT_USAGE");
         cfBugs = new CFLintAPI(configBuilder.build());
+        ComponentPath rootPath = ComponentPath.getInstance("src/test/resources/com/cflint/componentusagecheck/api/ura/Application.cfc");
     }
 
     @Test
     public void testNewComponentError() throws CFLintScanException {
-        final String tagSrc = "config = new components.configuration.manager('VoucherEngine', Attributes);";
+        final String tagSrc = "config = new components.configuration.handler('VoucherEngine', Attributes);";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
@@ -53,7 +55,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testExtendsComponentNoError() throws CFLintScanException {
-        final String tagSrc = "component extends = 'Base' restpath = 'authenticate' rest = true {\n" +
+        final String tagSrc = "component extends = 'api.Base' restpath = 'authenticate' rest = true {\n" +
             " public function init() {\n" +
             "      return this;\n" +
             "  }\n" +
@@ -78,7 +80,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testImplementsComponentNoError() throws CFLintScanException {
-        final String tagSrc = "component implements = 'Base' restpath = 'authenticate' rest = true {\n" +
+        final String tagSrc = "component implements = 'api.Base' restpath = 'authenticate' rest = true {\n" +
             " public function init() {\n" +
             "      return this;\n" +
             "  }\n" +
@@ -90,7 +92,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testImplementsComponentErrorWithFolderPath() throws CFLintScanException {
-        final String tagSrc = "component implements = 'MyProject.interface.handler' {}";
+        final String tagSrc = "component implements = 'components.configuration.handler' {}";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
@@ -98,7 +100,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testImplementsComponentNoErrorWithFolderPath() throws CFLintScanException {
-        final String tagSrc = "component implements = 'MyProject.interface.Handler' {}";
+        final String tagSrc = "component implements = 'components.configuration.Manager' {}";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
@@ -123,7 +125,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testPropertyInjectError() throws CFLintScanException {
-        final String tagSrc = "property name = 'reporter' inject = 'components.error.errorfunctions';";
+        final String tagSrc = "property name = 'reporter' inject = 'components.configuration.handler';";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
@@ -131,7 +133,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testPropertyInjectNoError() throws CFLintScanException {
-        final String tagSrc = "property name = 'reporter' inject = 'components.error.Errorfunctions';";
+        final String tagSrc = "property name = 'reporter' inject = 'components.configuration.Manager';";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
@@ -139,7 +141,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testExtendsCFMLComponentError() throws CFLintScanException {
-        final String tagSrc = "<cfcomponent extends=\"components.cfcs.xmlRpcService\">\n" +
+        final String tagSrc = "<cfcomponent extends=\"components.configuration.handler\">\n" +
             "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
@@ -148,7 +150,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testExtendsCFMLComponentNoError() throws CFLintScanException {
-        final String tagSrc = "<cfcomponent extends=\"components.cfcs.XmlRpcService\">\n" +
+        final String tagSrc = "<cfcomponent extends=\"components.XmlRpc\">\n" +
             "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
@@ -158,7 +160,7 @@ public class TestCFBugs_ComponentUse {
     @Test
     public void testCFMLCreateObjectError() throws CFLintScanException {
         final String tagSrc = "<cfcomponent >\n" +
-            "<cfset errorHandler = createObject(\"component\",\"components.error.errorFunctions\")>\n" +
+            "<cfset errorHandler = createObject(\"component\",\"components.configuration.handler\")>\n" +
             "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
@@ -168,7 +170,7 @@ public class TestCFBugs_ComponentUse {
     @Test
     public void testCFMLCreateObjectNoError() throws CFLintScanException {
         final String tagSrc = "<cfcomponent >\n" +
-            "<cfset errorHandler = createObject(\"component\",\"components.error.ErrorFunctions\")>\n" +
+            "<cfset errorHandler = createObject(\"component\",\"components.configuration.Manager\")>\n" +
             "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
@@ -178,7 +180,7 @@ public class TestCFBugs_ComponentUse {
     @Test
     public void testCFMLNewComponentError() throws CFLintScanException {
         final String tagSrc = "<cfcomponent >\n" +
-            "<cfset maskedVoucherNumberService = new components.cfcs.maskVoucherNumber()>\n" +
+            "<cfset maskedVoucherNumberService = new components.configuration.handler()>\n" +
             "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
@@ -188,7 +190,7 @@ public class TestCFBugs_ComponentUse {
     @Test
     public void testCFMLNewComponentNoError() throws CFLintScanException {
         final String tagSrc = "<cfcomponent >\n" +
-            "<cfset maskedVoucherNumberService = new components.cfcs.MaskVoucherNumber()>\n" +
+            "<cfset maskedVoucherNumberService = new components.configuration.Manager()>\n" +
             "</cfcomponent>";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
@@ -197,7 +199,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testDiGetInstanceError() throws CFLintScanException {
-        final String tagSrc = "exporter = server.di.getInstance('components.eftBatchProcessor.service.secExporter');";
+        final String tagSrc = "exporter = server.di.getInstance('components.configuration.handler');";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
@@ -205,7 +207,7 @@ public class TestCFBugs_ComponentUse {
 
     @Test
     public void testDiGetInstanceNoError() throws CFLintScanException {
-        final String tagSrc = "exporter = server.di.getInstance('components.eftBatchProcessor.service.SecExporter');";
+        final String tagSrc = "exporter = server.di.getInstance('components.configuration.Manager');";
         CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 0, result.size());

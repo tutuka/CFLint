@@ -25,18 +25,20 @@ public class ComponentPath {
     }
 
     private ComponentPath(String folderPath) {
-        String[] knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos"};
+        String[] knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos","access","customTags","common"};
         HashSet<String> knownRootSubs = new HashSet<>(Arrays.asList(knownRootSubDirs));
         componentsMapCache = new HashMap<>();
-        Path current = Paths.get(folderPath);
+        separator = System.getProperty("file.separator");
+        File current = new File(folderPath);
         boolean foundRoot = false;
         do {
-            current = current.getParent();
-            if (knownRootSubs.contains(current.toString().toLowerCase())) {
-                rootPath = current.getParent();
+            String currentDir = current.getParentFile().getName();
+            if (knownRootSubs.contains(currentDir)) {
+                rootPath = current.getParentFile().getParentFile().toPath();
                 foundRoot = true;
             }
-        } while (!foundRoot && current.getNameCount() != 0);
+            current = current.getParentFile();
+        } while (!foundRoot && current.toPath().getNameCount() != 0);
     }
 
     public boolean ComponentExists(String componentName) {
@@ -54,7 +56,7 @@ public class ComponentPath {
     }
 
     private Path getComponentPath(String componentName) {
-        String folderpath = rootPath.toAbsolutePath() + String.join(separator, componentName.split("\\.") + ".cfc");
+        String folderpath = rootPath.toAbsolutePath() + separator + String.join(separator, componentName.split("\\.")) + ".cfc";
         return Paths.get(folderpath);
     }
 
@@ -68,7 +70,7 @@ public class ComponentPath {
         } else {
             return componentsMapCache.get(current.toString());
         }
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(current, "*.cfc")) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(current, "*.{cfc,cfm}")) {
             for (Path entry : stream) {
                 componentsMapCache.get(current.toString()).add(entry.toString());
             }

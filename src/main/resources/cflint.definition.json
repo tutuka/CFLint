@@ -19,10 +19,6 @@
                 {
                     "name": "case",
                     "value": "PascalCase"
-                },
-                {
-                    "name": "webroot",
-                    "value": "\web"
                 }
             ]
         },

@@ -113,18 +113,21 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
 
     private void verifyComponentUsage(Context context, int lineNo, int offset, String componentName) {
         System.out.println(componentName);
-        if (componentName.contains(".")) {
-            String[] paths = componentName.split("\\.");
-            componentName = paths[paths.length - 1];
-        }
         String fileName = context.getFilename();
         System.out.println(fileName);
         ComponentPath compPath = ComponentPath.getInstance(fileName);
         if (!compPath.ComponentExists(componentName)) {
             context.addMessage("COMPONENT_NOT_FOUND", componentName, lineNo, offset);
-        } else if (!PascalCasePattern.matcher(componentName).matches()) {
-            context.addMessage("INVALID_COMPONENT_USAGE", componentName, lineNo, offset);
+        } else {
+            if (componentName.contains(".")) {
+                String[] paths = componentName.split("\\.");
+                componentName = paths[paths.length - 1];
+            }
+            if (!PascalCasePattern.matcher(componentName).matches()) {
+                context.addMessage("INVALID_COMPONENT_USAGE", componentName, lineNo, offset);
+            }
         }
+
     }
 
     protected UsageTypes getComponentUseIfAny(final String code) {
