@@ -16,6 +16,7 @@ public class ComponentPath {
     private Path rootPath;
     private static ComponentPath single_instance = null;
     private String separator;
+    private static HashSet<String> CFknownScriptFunctions;
 
     public static ComponentPath getInstance(String folder) {
         if (single_instance == null)
@@ -25,12 +26,14 @@ public class ComponentPath {
     }
 
     private ComponentPath(String folderPath) {
-        String[] knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos","access","customTags","common"};
+        //work around to find web root
+        // initialize known sub folders of web root
+        //without this, to find the web root , we have to search for server/web.xml coldfusion configuration file
+        String[] knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos", "access", "customTags", "common"};
         HashSet<String> knownRootSubs = new HashSet<>(Arrays.asList(knownRootSubDirs));
-        componentsMapCache = new HashMap<>();
-        separator = System.getProperty("file.separator");
         File current = new File(folderPath);
         boolean foundRoot = false;
+
         do {
             String currentDir = current.getParentFile().getName();
             if (knownRootSubs.contains(currentDir)) {
@@ -39,14 +42,24 @@ public class ComponentPath {
             }
             current = current.getParentFile();
         } while (!foundRoot && current.toPath().getNameCount() != 0);
+
+        componentsMapCache = new HashMap<>();
+        separator = System.getProperty("file.separator");
+
+        String[] knownScriptFuncs = {"ftp", "http", "mail", "pdf", "query", "storedproc", "dbinfo", "imap", "pop", "ldap", "feed"};
+        CFknownScriptFunctions = new HashSet<>(Arrays.asList(knownScriptFuncs));
+
     }
 
-    public boolean ComponentExists(String componentName) {
+    public boolean ComponentExists(String componentName, String currentSrcFile) {
 
+        if (CFknownScriptFunctions.contains(componentName.toLowerCase())) {
+            return true;
+        }
         if (rootPath == null) {
             System.out.println("root path not found");
         } else {
-            Path compPath = getComponentPath(componentName);
+            Path compPath = getComponentPath(componentName, currentSrcFile);
             HashSet<String> currentDirFiles = initOrGetFileNamesFromCache(compPath);
             if (currentDirFiles.contains(compPath.toAbsolutePath().toString())) {
                 return true;
@@ -55,9 +68,16 @@ public class ComponentPath {
         return false;
     }
 
-    private Path getComponentPath(String componentName) {
-        String folderpath = rootPath.toAbsolutePath() + separator + String.join(separator, componentName.split("\\.")) + ".cfc";
+    private Path getComponentPath(String componentName, String currentSrcFile) {
+        String folderpath = "";
+        if (componentName.contains(".")) {
+            folderpath = rootPath.toAbsolutePath() + separator + String.join(separator, componentName.split("\\.")) + ".cfc";
+        } else {
+            Path parentDir = Paths.get(currentSrcFile).getParent();
+            folderpath = parentDir.toAbsolutePath().toString() + separator + componentName + ".cfc";
+        }
         return Paths.get(folderpath);
+
     }
 
     private HashSet<String> initOrGetFileNamesFromCache(Path current) {

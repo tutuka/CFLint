@@ -40,7 +40,7 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
         patternsMap.put(UsageTypes.CREATEOBJECT, Pattern.compile("createObject.*component.*[\\'\\\"]([\\w\\d.]*)[\\'\\\"]"));
         patternsMap.put(UsageTypes.ATTRIBUTE, Pattern.compile("[\\'\\\"]([\\w\\.]+)[\\'\\\"]"));
         patternsMap.put(UsageTypes.NEW_COMPONENT, Pattern.compile("new\\s+([\\w\\d.]*)\\(.*"));
-        patternsMap.put(UsageTypes.DI_GET_INSTANCE, Pattern.compile("server\\.di\\.getInstance\\([\\'\\\"]([\\w\\d.]*)[\\'\\\"]"));
+        patternsMap.put(UsageTypes.DI_GET_INSTANCE, Pattern.compile("server\\.di\\.getInstance\\([\\'\\\"]([\\w\\d.]*)[\\'\\\"]\\s*\\)"));
         PascalCasePattern = Pattern.compile("^[A-Z][a-z]+(?:[A-Z][a-z]+)*$");
     }
 
@@ -116,7 +116,7 @@ public class ComponentUseChecker extends CFLintScannerAdapter {
         String fileName = context.getFilename();
         System.out.println(fileName);
         ComponentPath compPath = ComponentPath.getInstance(fileName);
-        if (!compPath.ComponentExists(componentName)) {
+        if (!compPath.ComponentExists(componentName, fileName)) {
             context.addMessage("COMPONENT_NOT_FOUND", componentName, lineNo, offset);
         } else {
             if (componentName.contains(".")) {

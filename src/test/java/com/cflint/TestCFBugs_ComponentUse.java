@@ -17,18 +17,19 @@ import com.cflint.exception.CFLintScanException;
 public class TestCFBugs_ComponentUse {
 
     private CFLintAPI cfBugs;
+    private String basePath = "src/test/resources/com/cflint/componentusagecheck/";
 
     @Before
     public void setUp() throws Exception {
         final ConfigBuilder configBuilder = new ConfigBuilder().include("INVALID_COMPONENT_USAGE");
         cfBugs = new CFLintAPI(configBuilder.build());
-        ComponentPath rootPath = ComponentPath.getInstance("src/test/resources/com/cflint/componentusagecheck/api/ura/Application.cfc");
+        ComponentPath rootPath = ComponentPath.getInstance(basePath + "api/ura/Application.cfc");
     }
 
     @Test
     public void testNewComponentError() throws CFLintScanException {
         final String tagSrc = "config = new components.configuration.handler('VoucherEngine', Attributes);";
-        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "ComponentName.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
     }
@@ -36,7 +37,7 @@ public class TestCFBugs_ComponentUse {
     @Test
     public void testNewComponentNoError() throws CFLintScanException {
         final String tagSrc = "config = new components.configuration.Manager('VoucherEngine', Attributes);";
-        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        CFLintResult lintresult = cfBugs.scan(tagSrc, "ComponentName.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 0, result.size());
     }
@@ -48,7 +49,7 @@ public class TestCFBugs_ComponentUse {
             "      return this;\n" +
             "  }\n" +
             "}";
-        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        CFLintResult lintresult = cfBugs.scan(tagSrc, basePath + "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
     }
@@ -73,7 +74,7 @@ public class TestCFBugs_ComponentUse {
             "      return this;\n" +
             "  }\n" +
             "}";
-        CFLintResult lintresult = cfBugs.scan(tagSrc, "NicComponentNm.cfc");
+        CFLintResult lintresult = cfBugs.scan(tagSrc, basePath + "NicComponentNm.cfc");
         Collection<List<BugInfo>> result = lintresult.getIssues().values();
         assertEquals(lintresult.getIssues().values().toString(), 1, result.size());
     }
