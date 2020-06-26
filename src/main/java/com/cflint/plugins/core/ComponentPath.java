@@ -14,7 +14,7 @@ import java.io.IOException;
 public class ComponentPath {
     private static HashMap<String, HashSet<String>> componentsMapCache;
     private Path rootPath;
-    private static ComponentPath single_instance = null;
+    private static ComponentPath single_instance ;
     private String separator;
     private static HashSet<String> CFknownScriptFunctions;
 
@@ -29,7 +29,11 @@ public class ComponentPath {
         //work around to find web root
         // initialize known sub folders of web root
         //without this, to find the web root , we have to search for server/web.xml coldfusion configuration file
-        String[] knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos", "access", "customTags", "common"};
+        String[]  knownRootSubDirs = {"api", "voucherengine", "components", "avisfuelcard", "commandchain", "ioc", "parrot", "paycard", "santam", "voucherpos", "access", "customTags", "common"};
+        String strlist = System.getProperty("knownsubdirs");
+        if (strlist != null && !strlist.isEmpty()) {
+            knownRootSubDirs = strlist.split(",");
+        }
         HashSet<String> knownRootSubs = new HashSet<>(Arrays.asList(knownRootSubDirs));
         File current = Paths.get(folderPath).toAbsolutePath().normalize().toFile();
         boolean foundRoot = false;
